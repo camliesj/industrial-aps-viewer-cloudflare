@@ -72,6 +72,16 @@ export class ApsClient {
     return readApsJson(response);
   }
 
+  async getThumbnail(urn) {
+    const token = await this.getInternalToken();
+    const response = await fetch(`${APS_DERIVATIVE_URL}/${urn}/thumbnail?width=800&height=800`, { headers: { Authorization: `Bearer ${token}` } });
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`APS thumbnail request failed (${response.status}): ${text || response.statusText}`);
+    }
+    return { body: response.body, contentType: response.headers.get("Content-Type") };
+  }
+
   toUrn(objectId) { return btoa(objectId).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_"); }
   signedUploadUrl(objectName) { return `${APS_OSS_URL}/buckets/${this.bucketKey()}/objects/${encodeURIComponent(objectName)}/signeds3upload`; }
   bucketKey() {
