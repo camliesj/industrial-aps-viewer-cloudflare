@@ -72,9 +72,10 @@ export class ApsClient {
     return readApsJson(response);
   }
 
-  async getThumbnail(urn) {
+  async getThumbnail(urn, size = 1600) {
     const token = await this.getInternalToken();
-    const response = await fetch(`${APS_DERIVATIVE_URL}/${urn}/thumbnail?width=800&height=800`, { headers: { Authorization: `Bearer ${token}` } });
+    const imageSize = Math.min(Math.max(Number(size) || 1600, 200), 2000);
+    const response = await fetch(`${APS_DERIVATIVE_URL}/${urn}/thumbnail?width=${imageSize}&height=${imageSize}`, { headers: { Authorization: `Bearer ${token}` } });
     if (!response.ok) {
       const text = await response.text();
       throw new Error(`APS thumbnail request failed (${response.status}): ${text || response.statusText}`);
