@@ -1,0 +1,12 @@
+name = "industrial-aps-viewer"
+compatibility_date = "2026-07-01"
+pages_build_output_dir = "."
+
+[vars]
+APS_BUCKET_KEY = "replace-with-globally-unique-bucket-key"
+APS_REGION = "US"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "industrial-aps-viewer"
+database_id = "replace-after-d1-create"
