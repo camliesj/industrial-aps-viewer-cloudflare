@@ -40,7 +40,6 @@ const isEmbedded=params.get("embedded")==="1";
 let viewer=null;
 let currentModel=null;
 let selectedProperties=[];
-let autoHomeApplied=false;
 const $=id=>document.getElementById(id);
 if(isEmbedded) document.body.classList.add("embedded");
 
@@ -112,10 +111,9 @@ function openViewer(urn,accessToken){
         }
         const role=node.data?.role||node.role||"viewable";
         $("modelMeta").textContent=`${currentModel.status||"-"} / ${role}`;
-        restoreHomeViewAfterGeometryLoads();
         viewer.loadDocumentNode(doc,node).then(()=>{
           hideMessage();
-          restoreHomeViewOnce({auto:true});
+          window.setTimeout(()=>restoreHomeViewOnce(),1200);
           resolve();
         }).catch(reject);
       },(code,message)=>reject(new Error(`Document.load failed: ${code||""} ${message||""}`)));
@@ -150,18 +148,7 @@ function applyMobileQuality(target){
   target.setLightPreset?.(0);
 }
 
-function restoreHomeViewAfterGeometryLoads(){
-  const eventName=Autodesk.Viewing.GEOMETRY_LOADED_EVENT;
-  const onGeometryLoaded=()=>{
-    viewer.removeEventListener(eventName,onGeometryLoaded);
-    restoreHomeViewOnce({auto:true});
-  };
-  viewer.addEventListener(eventName,onGeometryLoaded);
-}
-
-function restoreHomeViewOnce(options={}){
-  if(options.auto&&autoHomeApplied) return;
-  if(options.auto) autoHomeApplied=true;
+function restoreHomeViewOnce(){
   viewer?.resize?.();
   viewer?.setViewFromFile?.();
   viewer?.navigation?.setRequestHomeView?.(true);
