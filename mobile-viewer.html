@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>Mobile Model Viewer</title>
+<title>工业模型查看</title>
 <style>
 :root{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#f8fafc;background:#f7f9fc}
 *{box-sizing:border-box}html,body{height:100%;margin:0;overflow:hidden}.shell{display:grid;grid-template-rows:52px 1fr 58px;height:100%;background:#f7f9fc}
@@ -11,27 +11,27 @@ body.embedded .shell{grid-template-rows:1fr}body.embedded .topbar,body.embedded 
 .topbar,.bottombar{display:flex;align-items:center;gap:8px;background:#111827;border-color:#243244;color:#fff;padding:8px 10px;z-index:5}.topbar{border-bottom:1px solid #243244}.bottombar{border-top:1px solid #243244;justify-content:space-around}
 .title{min-width:0;flex:1}.title strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:15px}.title span{display:block;color:#9ca3af;font-size:12px;margin-top:2px}
 button,a.button{border:1px solid #334155;background:#172033;color:#fff;border-radius:8px;padding:8px 10px;text-decoration:none;font-size:13px}
-#viewerHost{position:relative;min-height:0;background:#f7f9fc;touch-action:none}.msg{position:absolute;left:12px;right:12px;top:12px;background:#fff;color:#172033;border-radius:10px;padding:12px;z-index:4;line-height:1.55;box-shadow:0 10px 30px rgba(0,0,0,.22)}
-.drawer{position:fixed;left:0;right:0;bottom:58px;max-height:44%;overflow:auto;background:#fff;color:#172033;border-radius:14px 14px 0 0;box-shadow:0 -14px 40px rgba(0,0,0,.35);padding:14px;z-index:10;transform:translateY(110%);transition:transform .2s ease}
-.drawer.show{transform:translateY(0)}.drawer h2{font-size:16px;margin:0 0 10px}.drawer dl{margin:0}.drawer div{display:grid;grid-template-columns:38% 1fr;gap:8px;border-top:1px solid #e5e7eb;padding:8px 0}.drawer dt{color:#64748b}.drawer dd{margin:0;word-break:break-word}
+#viewerHost{position:relative;min-height:0;background:#f7f9fc;touch-action:none}.msg{position:absolute;left:12px;right:12px;top:12px;background:rgba(255,255,255,.96);color:#172033;border:1px solid #dce7f5;border-radius:16px;padding:14px;z-index:4;line-height:1.55;box-shadow:0 16px 40px rgba(15,23,42,.14)}.msg strong{display:block;font-size:15px}.msg span{display:block;color:#64748b;font-size:13px;margin-top:4px}.msg em{display:inline-block;margin-top:10px;font-style:normal;color:#2563eb;background:#eff6ff;border-radius:999px;padding:5px 9px;font-size:12px}
+.drawer{position:fixed;left:0;right:0;bottom:58px;max-height:52%;overflow:auto;background:#fff;color:#172033;border-radius:18px 18px 0 0;box-shadow:0 -14px 40px rgba(0,0,0,.28);padding:16px;z-index:10;transform:translateY(110%);transition:transform .2s ease}
+.drawer.show{transform:translateY(0)}.drawer h2{font-size:17px;margin:0 0 4px}.drawer p{margin:0 0 12px;color:#64748b}.drawer dl{margin:0}.prop-section{margin-top:12px}.prop-section h3{font-size:13px;color:#2563eb;margin:0 0 6px}.drawer div.prop-row{display:grid;grid-template-columns:38% 1fr;gap:8px;border-top:1px solid #e5e7eb;padding:8px 0}.drawer dt{color:#64748b}.drawer dd{margin:0;word-break:break-word}
 .fallback{display:grid;place-items:center;height:100%;padding:16px;background:#111827;color:#172033}.fallback-card{background:#fff;border-radius:12px;padding:16px;max-width:520px;width:100%}.fallback img{display:block;max-width:100%;height:auto;background:#fff;margin-top:12px}
 </style>
 </head>
 <body>
 <main class="shell">
   <header class="topbar">
-    <a class="button" href="/">Back</a>
-    <div class="title"><strong id="modelName">Mobile Viewer</strong><span id="modelMeta">Preparing...</span></div>
-    <a class="button" href="/mobile-diagnostics">Diagnostics</a>
+    <a class="button" href="/">返回</a>
+    <div class="title"><strong id="modelName">工业模型查看</strong><span id="modelMeta">准备中...</span></div>
+    <a class="button" href="/mobile-diagnostics">诊断</a>
   </header>
-  <section id="viewerHost"><div class="msg" id="message">Loading mobile Viewer...</div></section>
+  <section id="viewerHost"><div class="msg" id="message"><strong>正在加载模型</strong><span>大模型加载可能需要一些时间，请保持页面停留。</span><em>云端 Viewer 初始化中</em></div></section>
   <nav class="bottombar">
-    <button type="button" id="fitBtn">Fit</button>
-    <button type="button" id="propBtn">Properties</button>
-    <button type="button" id="shareBtn">Share</button>
+    <button type="button" id="fitBtn">主视图</button>
+    <button type="button" id="propBtn">构件属性</button>
+    <button type="button" id="shareBtn">截图分享</button>
   </nav>
 </main>
-<aside class="drawer" id="drawer"><h2>Properties</h2><p id="propHint">Select a component to view properties.</p><dl id="props"></dl></aside>
+<aside class="drawer" id="drawer"><h2>构件属性</h2><p id="propHint">选择模型构件后查看属性，未选择时显示基础信息。</p><dl id="props"></dl></aside>
 <script>
 const VIEWER_VERSION="7.*";
 const params=new URLSearchParams(location.search);
@@ -45,19 +45,21 @@ if(isEmbedded) document.body.classList.add("embedded");
 
 boot().catch(error=>{
   console.error(error);
-  showMessage(error.message||"Mobile Viewer failed to open.");
+  showMessage("打开失败",error.message||"Mobile Viewer failed to open.","请检查模型转换状态或网络连接。");
   if(currentModel) showFallback(currentModel,error.message);
 });
 
 async function boot(){
-  if(!modelId) throw new Error("Missing model ID.");
+  if(!modelId) throw new Error("缺少模型 ID。");
   const modelPayload=await fetchJson(`/api/models/${encodeURIComponent(modelId)}`);
   currentModel=modelPayload.model;
-  $("modelName").textContent=currentModel.name||"Model Viewer";
+  $("modelName").textContent=currentModel.name||"工业模型查看";
   $("modelMeta").textContent=`${currentModel.status||"-"} / ${currentModel.progress||"-"}`;
-  if(!currentModel.urn) throw new Error("The model has not finished conversion yet.");
-  if(!supportsWebGL()) throw new Error("This browser does not support WebGL.");
+  if(!currentModel.urn) throw new Error("模型尚未完成转换。");
+  if(!supportsWebGL()) throw new Error("当前浏览器不支持 WebGL。");
+  showMessage("正在加载模型","大模型加载可能需要一些时间，请保持页面停留。","正在连接 Autodesk Viewer");
   await loadViewerAssets();
+  showMessage("正在加载模型","正在获取查看授权并打开云端模型。","正在准备 Viewer");
   const token=await fetchJson("/api/auth/token");
   await openViewer(currentModel.urn,token.access_token);
 }
@@ -86,7 +88,7 @@ function loadViewerAssets(){
     const script=document.createElement("script");
     script.src=`https://developer.api.autodesk.com/modelderivative/v2/viewers/${VIEWER_VERSION}/viewer3D.min.js`;
     script.onload=resolve;
-    script.onerror=()=>reject(new Error("Autodesk Viewer CDN failed to load."));
+    script.onerror=()=>reject(new Error("Autodesk Viewer 资源加载失败。"));
     document.body.appendChild(script);
   });
 }
@@ -98,7 +100,7 @@ function openViewer(urn,accessToken){
       viewer=new Autodesk.Viewing.GuiViewer3D(host,{extensions:[]});
       const started=viewer.start();
       if(started>0){
-        reject(new Error(`Viewer initialization failed: ${started}`));
+        reject(new Error(`Viewer 初始化失败：${started}`));
         return;
       }
       applyMobileQuality(viewer);
@@ -106,7 +108,7 @@ function openViewer(urn,accessToken){
       Autodesk.Viewing.Document.load(`urn:${urn}`,doc=>{
         const node=selectViewableNode(doc.getRoot());
         if(!node){
-          reject(new Error("No 2D or 3D viewable was found."));
+          reject(new Error("未找到可查看的二维图纸或三维模型。"));
           return;
         }
         const role=node.data?.role||node.role||"viewable";
@@ -116,7 +118,7 @@ function openViewer(urn,accessToken){
           window.setTimeout(()=>restoreHomeViewOnce(),1200);
           resolve();
         }).catch(reject);
-      },(code,message)=>reject(new Error(`Document.load failed: ${code||""} ${message||""}`)));
+      },(code,message)=>reject(new Error(`模型文档加载失败：${code||""} ${message||""}`)));
       viewer.addEventListener(Autodesk.Viewing.SELECTION_CHANGED_EVENT,event=>{
         const dbId=event.dbIdArray?.[0];
         if(!dbId){
@@ -157,31 +159,57 @@ function restoreHomeViewOnce(){
   viewer?.impl?.invalidate?.(true,true,true);
 }
 
-function showMessage(text){$("message").textContent=text;$("message").style.display="block"}
+function showMessage(title,detail="",tag=""){
+  $("message").innerHTML=`<strong>${escapeHtml(title)}</strong><span>${escapeHtml(detail)}</span>${tag?`<em>${escapeHtml(tag)}</em>`:""}`;
+  $("message").style.display="block";
+}
 function hideMessage(){$("message").style.display="none"}
 
 function renderProperties(){
   const props=$("props");
   const hint=$("propHint");
   props.innerHTML="";
+  appendPropertySection("基础信息",[
+    ["文件名称",currentModel?.name||"-"],
+    ["转换状态",currentModel?.status||"-"],
+    ["查看模式",$("modelMeta").textContent||"-"]
+  ]);
   if(selectedProperties.length===0){
     hint.style.display="block";
     return;
   }
   hint.style.display="none";
+  const groups=new Map();
   selectedProperties.slice(0,80).forEach(prop=>{
+    const category=prop.displayCategory||"其他属性";
+    if(!groups.has(category)) groups.set(category,[]);
+    groups.get(category).push([prop.displayName||prop.attributeName||"-",String(prop.displayValue??"-")]);
+  });
+  groups.forEach((items,category)=>appendPropertySection(category,items));
+}
+
+function appendPropertySection(title,items){
+  const props=$("props");
+  const section=document.createElement("section");
+  section.className="prop-section";
+  const heading=document.createElement("h3");
+  heading.textContent=title;
+  section.append(heading);
+  items.forEach(([name,value])=>{
     const row=document.createElement("div");
+    row.className="prop-row";
     const dt=document.createElement("dt");
     const dd=document.createElement("dd");
-    dt.textContent=prop.displayName||prop.attributeName||"-";
-    dd.textContent=String(prop.displayValue??"-");
+    dt.textContent=name;
+    dd.textContent=value;
     row.append(dt,dd);
-    props.append(row);
+    section.append(row);
   });
+  props.append(section);
 }
 
 function showFallback(model,reason){
-  $("viewerHost").innerHTML=`<div class="fallback"><div class="fallback-card"><strong>Full Viewer did not open</strong><p>${escapeHtml(reason||"This mobile browser could not open the full Viewer.")}</p><p>Cloud preview is shown below.</p><img src="/api/models/${encodeURIComponent(model.id)}/thumbnail?size=1000" alt=""></div></div>`;
+  $("viewerHost").innerHTML=`<div class="fallback"><div class="fallback-card"><strong>Viewer 未能打开</strong><p>${escapeHtml(reason||"当前移动端 WebView 无法打开完整 Viewer。")}</p><p>下方显示云端预览图。</p><img src="/api/models/${encodeURIComponent(model.id)}/thumbnail?size=1000" alt=""></div></div>`;
 }
 
 function escapeHtml(value){
@@ -191,12 +219,14 @@ function escapeHtml(value){
 $("fitBtn").onclick=()=>restoreHomeViewOnce();
 $("propBtn").onclick=()=>$("drawer").classList.toggle("show");
 $("shareBtn").onclick=async()=>{
-  const data={title:currentModel?.name||"Model Viewer",url:location.href};
+  const title=`分享工业模型：${currentModel?.name||"模型"}`;
+  const text=`${currentModel?.name||"模型"}\n查看链接：${location.href}`;
+  const data={title,text,url:location.href};
   if(navigator.share){
     await navigator.share(data).catch(()=>{});
   }else{
-    await navigator.clipboard?.writeText(location.href);
-    showMessage("Link copied.");
+    await navigator.clipboard?.writeText(text);
+    showMessage("分享链接已复制","已复制模型名称和查看链接。","截图分享");
     setTimeout(hideMessage,1600);
   }
 };
