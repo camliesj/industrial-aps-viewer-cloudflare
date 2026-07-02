@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>移动端 Viewer 诊断</title>
+<style>
+body{margin:0;background:#f4f7fb;color:#172033;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;padding:16px}h1{font-size:22px;margin:0 0 12px}.card{background:#fff;border:1px solid #dbe4ee;border-radius:10px;padding:14px;margin-bottom:12px}dl{margin:0}div.row{display:grid;grid-template-columns:42% 1fr;gap:8px;border-top:1px solid #edf2f7;padding:9px 0}div.row:first-child{border-top:0}dt{color:#64748b}dd{margin:0;word-break:break-word}.ok{color:#08704e}.bad{color:#b42318}button,a{display:inline-block;margin-right:8px;border:1px solid #cbd8e6;background:#fff;color:#172033;padding:9px 12px;border-radius:8px;text-decoration:none}
+</style>
+</head>
+<body>
+<h1>移动端 Viewer 诊断</h1>
+<p><a href="/">返回项目</a><button type="button" id="copyBtn">复制诊断信息</button></p>
+<section class="card"><dl id="result"></dl></section>
+<script>
+const rows=[];
+function add(name,value,ok){rows.push({name,value,ok});}
+function webglContext(type){try{return document.createElement("canvas").getContext(type)}catch{return null}}
+async function checkViewerCdn(){return new Promise(resolve=>{let done=false;function finish(value){if(done)return;done=true;resolve(value)}const script=document.createElement("script");script.src="https://developer.api.autodesk.com/modelderivative/v2/viewers/7.*/viewer3D.min.js";script.onload=()=>finish("加载成功");script.onerror=()=>finish("加载失败");document.body.appendChild(script);setTimeout(()=>finish("加载超时"),12000);});}
+async function run(){add("User Agent",navigator.userAgent,true);add("屏幕尺寸",`${screen.width} x ${screen.height}`,true);add("窗口尺寸",`${innerWidth} x ${innerHeight}`,innerWidth>0&&innerHeight>0);const webgl=Boolean(webglContext("webgl"));const webgl2=Boolean(webglContext("webgl2"));add("WebGL",webgl?"支持":"不支持",webgl);add("WebGL2",webgl2?"支持":"不支持",webgl2);add("触控",matchMedia("(pointer: coarse)").matches?"触控设备":"非触控设备",true);const cdn=await checkViewerCdn();add("Autodesk Viewer CDN",cdn,cdn==="加载成功");render();}
+function render(){document.getElementById("result").innerHTML=rows.map(row=>`<div class="row"><dt>${row.name}</dt><dd class="${row.ok?"ok":"bad"}">${row.value}</dd></div>`).join("");}
+document.getElementById("copyBtn").onclick=async()=>{await navigator.clipboard?.writeText(rows.map(row=>`${row.name}: ${row.value}`).join("\n"));};
+run();
+</script>
+</body>
+</html>
