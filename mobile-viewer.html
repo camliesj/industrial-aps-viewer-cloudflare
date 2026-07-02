@@ -111,10 +111,10 @@ function openViewer(urn,accessToken){
         }
         const role=node.data?.role||node.role||"viewable";
         $("modelMeta").textContent=`${currentModel.status||"-"} / ${role}`;
-        fitAfterGeometryLoads();
+        restoreHomeViewAfterGeometryLoads();
         viewer.loadDocumentNode(doc,node).then(()=>{
           hideMessage();
-          fitModelRepeatedly();
+          restoreHomeViewRepeatedly();
           resolve();
         }).catch(reject);
       },(code,message)=>reject(new Error(`Document.load failed: ${code||""} ${message||""}`)));
@@ -149,23 +149,30 @@ function applyMobileQuality(target){
   target.setLightPreset?.(0);
 }
 
-function fitAfterGeometryLoads(){
+function restoreHomeViewAfterGeometryLoads(){
   const eventName=Autodesk.Viewing.GEOMETRY_LOADED_EVENT;
   const onGeometryLoaded=()=>{
     viewer.removeEventListener(eventName,onGeometryLoaded);
-    fitModelRepeatedly();
+    restoreHomeViewRepeatedly();
   };
   viewer.addEventListener(eventName,onGeometryLoaded);
 }
 
-function fitModelRepeatedly(){
-  [0,250,800,1600].forEach(delay=>{
+function restoreHomeViewRepeatedly(){
+  [0,250,800,1600,2800].forEach(delay=>{
     window.setTimeout(()=>{
-      viewer?.resize?.();
-      viewer?.fitToView?.();
-      viewer?.impl?.invalidate?.(true,true,true);
+      restoreHomeViewOnce();
     },delay);
   });
+}
+
+function restoreHomeViewOnce(){
+  viewer?.resize?.();
+  viewer?.setViewFromFile?.();
+  viewer?.navigation?.setRequestHomeView?.(true);
+  viewer?.autocam?.goHome?.();
+  viewer?.fitToView?.();
+  viewer?.impl?.invalidate?.(true,true,true);
 }
 
 function showMessage(text){$("message").textContent=text;$("message").style.display="block"}
@@ -199,7 +206,7 @@ function escapeHtml(value){
   return String(value||"").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[char]));
 }
 
-$("fitBtn").onclick=()=>fitModelRepeatedly();
+$("fitBtn").onclick=()=>restoreHomeViewRepeatedly();
 $("propBtn").onclick=()=>$("drawer").classList.toggle("show");
 $("shareBtn").onclick=async()=>{
   const data={title:currentModel?.name||"Model Viewer",url:location.href};
